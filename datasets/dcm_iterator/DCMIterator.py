@@ -4,7 +4,7 @@ import os.path as path
 import glob
 
 class Experiment:
-    def __init__(self, patient_folder, experiment_folder, slice_paths, mask_path):
+    def __init__(self, patient_folder, experiment_folder, slice_paths, mask_paths):
         self.patient_folder = patient_folder
         self.experiment_folder = experiment_folder
         
@@ -12,7 +12,7 @@ class Experiment:
         self.patient_id = path.basename(patient_folder)
         
         self.slice_paths = slice_paths
-        self.mask_path = mask_path
+        self.mask_paths = mask_paths
 
 class DCMIterator:
     def __init__(self, folder_path):
@@ -40,17 +40,16 @@ class DCMIterator:
             dcm_file_paths = glob.glob(dcm_search_pattern, recursive=True)
             
             # Seperate the dicom-files to slices and the mask file
-            slice_paths, mask_path = self._get_slices_and_mask_(dcm_file_paths)
+            slice_paths, mask_paths = self._get_slices_and_mask_(dcm_file_paths)
             
             # Return the experiment
-            yield Experiment(patient_folder, experiment_folder, slice_paths, mask_path)
+            yield Experiment(patient_folder, experiment_folder, slice_paths, mask_paths)
         
     # TODO Clean this up and split finding the dicom files from searching for the mask path
     def _get_slices_and_mask_(self, dicom_file_paths):
         last_slice_folder = None
-        last_mask_folder = None
         slices = []
-        mask = None
+        masks = []
         for file_path in dicom_file_paths:
             resource_type = utils.get_resource_type(file_path)
             scan_folder = utils.get_scan_folder_name(file_path)
@@ -59,16 +58,11 @@ class DCMIterator:
                 if last_slice_folder is None:
                     last_slice_folder = scan_folder
                 elif last_slice_folder != scan_folder:
-                    raise Exception("There are multiple scan-folders which contain slices")
+                    continue # For now we will ignore multiple scan folders per experiment
                     
                 slices.append(file_path)
                 
             elif resource_type == utils.RESOURCE_TYPE_MASK:
-                if last_mask_folder is None:
-                    last_mask_folder = scan_folder
-                else:
-                    raise Exception("There are multiple files containing a masking")
-                
-                mask = file_path
+                masks.append(file_path)
         
-        return slices, mask
+        return slices, masks

@@ -6,8 +6,13 @@ import random
 import torch
 import numpy as np
 
+def normalize(image, minimum, maximum):
+    # https://stats.stackexchange.com/questions/178626/how-to-normalize-data-between-1-and-1
+    image = (image - minimum) / (maximum - minimum)
+    return 2 * image - 1
 
-class ct2cbctDataset(BaseDataset):
+
+class cbct2ctDataset(BaseDataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
@@ -46,17 +51,20 @@ class ct2cbctDataset(BaseDataset):
         cbct_img = np.load(cbct_path)
         ct_img = np.load(ct_path)
         
+        # Convert to tensors
+        cbct_tensor = torch.from_numpy(cbct_img).unsqueeze(0).float()
+        ct_tensor = torch.from_numpy(ct_img).unsqueeze(0).float()
+
         # Normalize data
-        # Do this here to prevent storing the values as floats, taking up much more memory
-        cbct = torch.from_numpy(cbct_img).unsqueeze(0).float() / 1000.0 # <-- CT normalization hack HU/1000
-        ct = torch.from_numpy(ct_img).unsqueeze(0).float() / 1000.0
+        # We didnt do this in the preprocessing step so we dont have to store our data as floats
+        cbct_tensor = normalize(cbct_tensor, -1000.0, 7000)
+        ct_tensor = normalize(ct_tensor, -1024.0, 3072.0) 
 
-
-        return {'A': cbct, 'B': ct,
+        return {'A': cbct_tensor, 'B': ct_tensor,
                 'A_paths': cbct_path, 'ct_paths': ct_path}
 
     def __len__(self):
-        return max(self.cbct_size, self.B_size)
+        return max(self.cbct_size, self.ct_size)
 
     def name(self):
-        return 'UnalignedDataset'
+        return 'cbct2ctDataset'
