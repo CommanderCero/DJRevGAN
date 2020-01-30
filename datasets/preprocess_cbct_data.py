@@ -55,7 +55,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Ensure the folders we need exist
-    for folder in ["trainA", "trainB", "testA", "testB"]:
+    for folder in ["trainCBCT", "trainCT", "testCBCT", "testCT"]:
         Path(os.path.join(args.targetFolder, folder)).mkdir(parents=True, exist_ok=True)
     
     # Create iterators for CBCT- and CT-data
