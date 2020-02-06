@@ -11,7 +11,6 @@ def normalize(image, minimum, maximum):
     image = (image - minimum) / (maximum - minimum)
     return 2 * image - 1
 
-
 class cbct2ctDataset(BaseDataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
