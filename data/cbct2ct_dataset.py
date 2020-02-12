@@ -51,12 +51,12 @@ class cbct2ctDataset(BaseDataset):
         ct_img = np.load(ct_path)
         
         # Convert to tensors
-        cbct_tensor = torch.from_numpy(cbct_img).unsqueeze(0).float()
-        ct_tensor = torch.from_numpy(ct_img).unsqueeze(0).float()
+        cbct_tensor = torch.from_numpy(cbct_img).view(1, *cbct_img.shape)
+        ct_tensor = torch.from_numpy(ct_img).view(1, *ct_img.shape)
 
         # Normalize data
         # We didnt do this in the preprocessing step so we dont have to store our data as floats
-        cbct_tensor = normalize(cbct_tensor, -1000.0, 7000)
+        cbct_tensor = normalize(cbct_tensor, -1000.0, 7000.0)
         ct_tensor = normalize(ct_tensor, -1024.0, 3072.0) 
 
         return {'A': cbct_tensor, 'B': ct_tensor,
